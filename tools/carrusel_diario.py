@@ -76,7 +76,7 @@ def build(dia, imgdir):
           <div class='chart'><img src='data:image/png;base64,{b64}'></div>
           <div style='margin-top:44px'><h1><span class='{c}'>{r(o['r_real'])}.</span> {dur_txt[0].upper()+dur_txt[1:]}.</h1></div>""")
         t = tipo(o.get("tipo","")) or (ph("[Rotura ZA · ORB · Momentum]") if PREVIEW else "")
-        idea = (o.get("reflexion") or "").strip() or (ph("[Frase del trade]") if PREVIEW else "")
+        idea = (o.get("reflexion") or "").strip() or (ph("[Por qué entré: una o dos frases]") if PREVIEW else "")
         fila_setup = f"<div class='row'><b>Setup</b><span>{t}</span></div>" if t else ""
         bodies.append(f"""<div class='head'>Idea de trade</div><div class='mid'>
           {f"<p style='font-size:50px'>{esc(idea) if not idea.startswith('<span') else idea}</p>" if idea else ""}
@@ -89,8 +89,10 @@ def build(dia, imgdir):
         txt = esc(refl) if refl else ph("[Lección del día]")
         fs = 54 if len(refl) < 220 else 44
         bodies.append(f"""<div class='head'>Reflexión del día</div><div class='mid'><p style='font-size:{fs}px;line-height:1.3'>{txt}</p></div>""")
-    # Cierre: solo el lema, en blanco y grande
-    bodies.append("""<div class='mid'><h1 style='font-size:120px'>Paso corto,<br>vista larga.</h1></div>""")
+    # Cierre: cita + lema
+    bodies.append("""<div class='mid'><h1 style='font-size:96px;line-height:1.05'>Somos lo que hacemos repetidamente.</h1>
+      <p style='font-size:34px;color:#7d7a74'>Will Durant</p>
+      <p style='font-size:46px;color:#4f8a6f;font-weight:600;margin-top:30px'>Paso corto, vista larga.</p></div>""")
     total = len(bodies)
     return [page(b, k+1, total) for k, b in enumerate(bodies)]
 
