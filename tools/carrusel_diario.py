@@ -1,6 +1,8 @@
 """Carrusel de diario @amoryprofit.
 Uso: python3 carrusel_diario.py dia.json salida/   (las imágenes de cada op: <op_id>.png junto al json)
 dia.json = {"fecha":"2026-10-09","reflexion":"<valoración del día>","ops":[{id,hora_entrada,direccion,duracion_min,r_real,tipo,reflexion(=frase del trade)}]}
+  o, con varias cuentas: {"fecha":…,"reflexion":…,"cuentas":[{"nombre":"Cuenta 50K","ops":[…]},{"nombre":"Cuenta 25K","ops":[…]}]}
+  (cada cuenta tiene su portada con su R y sus trades; la primera es la principal). r_real de cada op = R contra el riesgo máximo de esa cuenta.
 --preview muestra huecos amarillos para lo que falte; sin él, lo que falte simplemente no sale.
 Estructura: portada (gráfico del 1.er trade + R del día) · idea del trade 1 · por cada trade siguiente: gráfico + idea · reflexión del día · cierre.
 Tipos del journal -> Instagram: Tipo 1 = Rotura ZA, Tipo 2 = ORB, Tipo 3 = Momentum.
@@ -16,7 +18,7 @@ CIERRES = {
  2: ("Sigo.", None),
  3: ("Todavía no.<br>Pero sigo.", None),
 }
-def r(x): s=f"{x:+.1f}".replace('.',',').replace('+','+').replace('-','−'); return s+"R"
+def r(x): s=f"{x:+.2f}".replace('.',',').replace('+','+').replace('-','−'); return s+"R"
 def sesion(h): return "Londres" if int(h.split(':')[0]) < 14 else "Nueva York"
 def tipo(t): return TIPOS.get(str(t).strip().lower(), None)
 import html as _h
@@ -48,53 +50,63 @@ p{font-size:46px;line-height:1.32;color:#d9d5ce}
 def page(body, n, total, label="Diario"):
     return f"<html><head><meta charset='utf-8'><style>{CSS}</style></head><body><div class='band'></div><div class='wrap'>{body}</div><div class='foot'><span>@amoryprofit</span><span>{n}/{total}</span></div></body></html>"
 
-def build(dia, imgdir):
-    ops = sorted(dia["ops"], key=lambda o: o["hora_entrada"])
-    f = datetime.date.fromisoformat(dia["fecha"])
-    fecha_larga = f"{DIAS[f.weekday()]} {f.day} de {MESES[f.month-1]}"
-    fecha_corta = f"{DIAS[f.weekday()]} {f.day} {MESES[f.month-1][:3]}"
+def build_cuenta(nombre, ops, imgdir, fecha_corta, n_cuentas):
+    ops = sorted(ops, key=lambda o: o["hora_entrada"])
     rtot = sum(o["r_real"] for o in ops); cls = "pos" if rtot >= 0 else "neg"
     sesiones = []
     for o in ops:
-        s = sesion(o["hora_entrada"]); 
+        s = sesion(o["hora_entrada"])
         if s not in sesiones: sesiones.append(s)
     n = len(ops)
     bodies = []
-    # 1 · Portada del día: gráfico del primer trade + resultado del día
+    kick = f"{fecha_corta}" + (f" · {esc(nombre)}" if nombre else "")
     o1 = ops[0]
     b64_1 = base64.b64encode(open(os.path.join(imgdir, o1["id"] + ".png"),'rb').read()).decode()
-    bodies.append(f"""<div class='kicker'>{fecha_corta}</div>
+    bodies.append(f"""<div class='kicker'>{kick}</div>
       <div class='chart'><img src='data:image/png;base64,{b64_1}'></div>
       <div style='margin-top:40px;display:flex;align-items:baseline;gap:34px;flex-wrap:wrap'>
         <span class='{cls}' style='font-size:128px;font-weight:800;letter-spacing:-.03em;line-height:1'>{r(rtot)}</span>
         <span style='font-size:46px;font-weight:700'>{n} {'trade' if n==1 else 'trades'} · {' y '.join(sesiones)}</span></div>""")
-    # por trade
+    sub = f" · {esc(nombre)}" if nombre and n_cuentas > 1 else ""
     for i, o in enumerate(ops, 1):
         img = os.path.join(imgdir, o["id"] + ".png")
         b64 = base64.b64encode(open(img,'rb').read()).decode()
         c = "pos" if o["r_real"] >= 0 else "neg"
         dur = round(o.get("duracion_min") or 0)
         dur_txt = f"{dur} minutos" if dur < 90 else f"{dur//60} h {dur%60:02d} min"
-        if i > 1: bodies.append(f"""<div class='kicker'>Trade {i} de {n} · {sesion(o['hora_entrada'])}</div>
+        if i > 1: bodies.append(f"""<div class='kicker'>Trade {i} de {n} · {sesion(o['hora_entrada'])}{sub}</div>
           <div class='chart'><img src='data:image/png;base64,{b64}'></div>
           <div style='margin-top:44px'><h1><span class='{c}'>{r(o['r_real'])}.</span> {dur_txt[0].upper()+dur_txt[1:]}.</h1></div>""")
         t = tipo(o.get("tipo","")) or (ph("[Rotura ZA · ORB · Momentum]") if PREVIEW else "")
         idea = (o.get("reflexion") or "").strip() or (ph("[Por qué entré: una o dos frases]") if PREVIEW else "")
         fila_setup = f"<div class='row'><b>Setup</b><span>{t}</span></div>" if t else ""
-        cab = f"Idea de trade" + (f" <span style='color:#7d7a74;font-size:34px;font-weight:600'>· {i} de {n} · {sesion(o['hora_entrada'])}</span>" if n > 1 else "")
+        det = []
+        if n > 1: det.append(f"{i} de {n}")
+        det.append(sesion(o['hora_entrada']))
+        if nombre and n_cuentas > 1: det.append(esc(nombre))
+        cab = "Idea de trade" + f" <span style='color:#7d7a74;font-size:34px;font-weight:600'>· {' · '.join(det)}</span>"
+        fs_idea = 50 if len(idea) < 170 else (44 if len(idea) < 240 else 40)
         bodies.append(f"""<div class='head'>{cab}</div><div class='mid'>
-          {f"<p style='font-size:50px'>{esc(idea) if not idea.startswith('<span') else idea}</p>" if idea else ""}
+          {f"<p style='font-size:{fs_idea}px'>{esc(idea) if not idea.startswith('<span') else idea}</p>" if idea else ""}
           <div>{fila_setup}
           <div class='row'><b>Dirección</b><span>{'Corto' if o['direccion'].upper().startswith('C') else 'Largo'}</span></div>
           <div class='row'><b>Resultado</b><span class='{c}'>{r(o['r_real'])}</span></div>
           <div class='row'><b>Duración</b><span>{dur_txt}</span></div></div></div>""")
-    # Reflexión del día
+    return bodies
+
+def build(dia, imgdir):
+    f = datetime.date.fromisoformat(dia["fecha"])
+    fecha_corta = f"{DIAS[f.weekday()]} {f.day} {MESES[f.month-1][:3]}"
+    cuentas = dia.get("cuentas") or [{"nombre": "", "ops": dia["ops"]}]
+    cuentas = [c for c in cuentas if c.get("ops")]
+    bodies = []
+    for c in cuentas:
+        bodies += build_cuenta(c.get("nombre",""), c["ops"], imgdir, fecha_corta, len(cuentas))
     refl = (dia.get("reflexion") or "").strip()
     if refl or PREVIEW:
         txt = esc(refl) if refl else ph("[Lección del día]")
         fs = 54 if len(refl) < 220 else 44
         bodies.append(f"""<div class='head'>Reflexión del día</div><div class='mid'><p style='font-size:{fs}px;line-height:1.3'>{txt}</p></div>""")
-    # Cierre: cita + lema
     bodies.append("""<div class='mid'><h1 style='font-size:96px;line-height:1.05'>Somos lo que hacemos repetidamente.</h1>
       <p style='font-size:34px;color:#7d7a74'>Will Durant</p>
       <p style='font-size:46px;color:#4f8a6f;font-weight:600;margin-top:30px'>Paso corto, vista larga.</p></div>""")
