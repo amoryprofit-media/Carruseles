@@ -4,7 +4,10 @@ dia.json = {"fecha":"2026-10-09","reflexion":"<valoración del día>","ops":[{id
   o, con varias cuentas: {"fecha":…,"reflexion":…,"cuentas":[{"nombre":"Cuenta 50K","ops":[…]},{"nombre":"Cuenta 25K","ops":[…]}]}
   (cada cuenta tiene su portada con su R y sus trades; la primera es la principal). r_real de cada op = R contra el riesgo máximo de esa cuenta.
 --preview muestra huecos amarillos para lo que falte; sin él, lo que falte simplemente no sale.
-Estructura: portada (gráfico del 1.er trade + R del día) · idea del trade 1 · por cada trade siguiente: gráfico + idea · reflexión del día · cierre.
+Estructura (desde 14 oct 2026): portada con imagen de fondo (cuadro clásico) + resumen del día por cuenta ·
+  por cada cuenta y cada trade: gráfico con su R y duración + idea del trade · reflexión del día · cierre.
+Portada: dia.json["portada"] = {"imagen": ruta (relativa al json o absoluta), "recorte": [x0,y0,x1,y1] en fracciones (opcional),
+  "desenfoque": px (def. 6), "oscuro": 0-1 (def. .55), "gris": false}. Sin "portada", fondo oscuro liso.
 Tipos del journal -> Instagram: Tipo 1 = Rotura ZA, Tipo 2 = ORB, Tipo 3 = Momentum.
 """
 import asyncio, base64, json, sys, os, datetime
@@ -45,10 +48,62 @@ p{font-size:46px;line-height:1.32;color:#d9d5ce}
 .chart{width:100%;height:760px;border-radius:18px;overflow:hidden;margin-top:36px;background:#c5c5c5}
 .chart img{width:100%;height:100%;object-fit:cover;object-position:50% 46%}
 .pos{color:#6fbf95}.neg{color:#d9776b}
+.bg{position:absolute;inset:-40px;background-size:cover;background-position:center;z-index:0}
+.veil{position:absolute;inset:0;z-index:1}
+.cov{position:absolute;left:96px;right:84px;bottom:150px;z-index:2;display:flex;flex-direction:column;gap:26px}
+.cov .fecha{font-size:40px;font-weight:600;color:#e9e4da;letter-spacing:.01em}
+.cov .cta{display:flex;align-items:baseline;justify-content:space-between;gap:30px;border-top:2px solid rgba(241,238,232,.28);padding-top:22px}
+.cov .cta b{font-size:40px;font-weight:600;color:#e9e4da}
+.cov .cta span{font-size:118px;font-weight:800;letter-spacing:-.03em;line-height:1}
+.cov .cta i{font-style:normal;font-size:30px;color:#cfc8bd;display:block;margin-top:6px}
 .big{font-size:230px;font-weight:800;letter-spacing:-.04em;line-height:1}
 """
 def page(body, n, total, label="Diario"):
+    if isinstance(body, tuple):  # portada: (html de fondo, html encima)
+        fondo, encima = body
+        return f"<html><head><meta charset='utf-8'><style>{CSS}</style></head><body>{fondo}<div class='band' style='z-index:3'></div>{encima}<div class='foot' style='z-index:3;color:#cfc8bd'><span>@amoryprofit</span><span>{n}/{total}</span></div></body></html>"
     return f"<html><head><meta charset='utf-8'><style>{CSS}</style></head><body><div class='band'></div><div class='wrap'>{body}</div><div class='foot'><span>@amoryprofit</span><span>{n}/{total}</span></div></body></html>"
+
+def portada_fondo(cfg, basedir):
+    """Recorta a 4:5 y devuelve el html del fondo (imagen desenfocada y oscurecida)."""
+    if not cfg or not cfg.get("imagen"):
+        return "<div class='veil' style='background:#0f1114'></div>"
+    from PIL import Image, ImageFilter, ImageEnhance
+    import io
+    ruta = cfg["imagen"] if os.path.isabs(cfg["imagen"]) else os.path.join(basedir, cfg["imagen"])
+    im = Image.open(ruta).convert("RGB"); W, H = im.size
+    if cfg.get("recorte"):
+        x0, y0, x1, y1 = cfg["recorte"]; im = im.crop((int(x0*W), int(y0*H), int(x1*W), int(y1*H))); W, H = im.size
+    obj = 4/5
+    if W/H > obj:
+        nw = int(H*obj); cx = cfg.get("centro_x", .5); x = min(max(int(cx*W - nw/2), 0), W-nw); im = im.crop((x, 0, x+nw, H))
+    else:
+        nh = int(W/obj); im = im.crop((0, (H-nh)//2, W, (H-nh)//2+nh))
+    im = im.resize((1160, 1450), Image.LANCZOS)
+    if cfg.get("gris"): im = ImageEnhance.Color(im).enhance(0)
+    else: im = ImageEnhance.Color(im).enhance(cfg.get("color", .8))
+    d = cfg.get("desenfoque", 6)
+    if d: im = im.filter(ImageFilter.GaussianBlur(d))
+    buf = io.BytesIO(); im.save(buf, "JPEG", quality=88)
+    b64 = base64.b64encode(buf.getvalue()).decode()
+    k = cfg.get("oscuro", .55)
+    return (f"<div class='bg' style=\"background-image:url(data:image/jpeg;base64,{b64})\"></div>"
+            f"<div class='veil' style='background:linear-gradient(180deg,rgba(10,11,13,{k*.55:.2f}) 0%,rgba(10,11,13,{k*.7:.2f}) 40%,rgba(10,11,13,{min(k+.35,.95):.2f}) 100%)'></div>")
+
+def portada(dia, cuentas, basedir):
+    f = datetime.date.fromisoformat(dia["fecha"])
+    fecha = f"{DIAS[f.weekday()]} {f.day} de {MESES[f.month-1]}"
+    filas = ""
+    for c in cuentas:
+        ops = c["ops"]; rt = sum(o["r_real"] for o in ops); n = len(ops)
+        ses = []
+        for o in sorted(ops, key=lambda o: o["hora_entrada"]):
+            s_ = sesion(o["hora_entrada"])
+            if s_ not in ses: ses.append(s_)
+        nom = esc(c.get("nombre") or "Resultado")
+        filas += (f"<div class='cta'><div><b>{nom}</b><i>{n} {'trade' if n==1 else 'trades'} · {' y '.join(ses)}</i></div>"
+                  f"<span class='{'pos' if rt>=0 else 'neg'}'>{r(rt)}</span></div>")
+    return (portada_fondo(dia.get("portada"), basedir), f"<div class='cov'><div class='fecha'>{fecha}</div>{filas}</div>")
 
 def build_cuenta(nombre, ops, imgdir, fecha_corta, n_cuentas):
     ops = sorted(ops, key=lambda o: o["hora_entrada"])
@@ -59,22 +114,14 @@ def build_cuenta(nombre, ops, imgdir, fecha_corta, n_cuentas):
         if s not in sesiones: sesiones.append(s)
     n = len(ops)
     bodies = []
-    kick = f"{fecha_corta}" + (f" · {esc(nombre)}" if nombre else "")
-    o1 = ops[0]
-    b64_1 = base64.b64encode(open(os.path.join(imgdir, o1["id"] + ".png"),'rb').read()).decode()
-    bodies.append(f"""<div class='kicker'>{kick}</div>
-      <div class='chart'><img src='data:image/png;base64,{b64_1}'></div>
-      <div style='margin-top:40px;display:flex;align-items:baseline;gap:34px;flex-wrap:wrap'>
-        <span class='{cls}' style='font-size:128px;font-weight:800;letter-spacing:-.03em;line-height:1'>{r(rtot)}</span>
-        <span style='font-size:46px;font-weight:700'>{n} {'trade' if n==1 else 'trades'} · {' y '.join(sesiones)}</span></div>""")
     sub = f" · {esc(nombre)}" if nombre and n_cuentas > 1 else ""
     for i, o in enumerate(ops, 1):
         img = os.path.join(imgdir, o["id"] + ".png")
-        b64 = base64.b64encode(open(img,'rb').read()).decode()
+        b64 = base64.b64encode(open(img,'rb').read()).decode() if os.path.exists(img) else None
         c = "pos" if o["r_real"] >= 0 else "neg"
         dur = round(o.get("duracion_min") or 0)
-        dur_txt = f"{dur} minutos" if dur < 90 else f"{dur//60} h {dur%60:02d} min"
-        if i > 1: bodies.append(f"""<div class='kicker'>Trade {i} de {n} · {sesion(o['hora_entrada'])}{sub}</div>
+        dur_txt = (f"{dur} minuto" if dur == 1 else f"{dur} minutos") if dur < 90 else f"{dur//60} h {dur%60:02d} min"
+        if b64: bodies.append(f"""<div class='kicker'>{(esc(nombre)+' · ') if nombre and n_cuentas > 1 else ''}{('Trade '+str(i)+' de '+str(n)+' · ') if n > 1 else ''}{sesion(o['hora_entrada'])}</div>
           <div class='chart'><img src='data:image/png;base64,{b64}'></div>
           <div style='margin-top:44px'><h1><span class='{c}'>{r(o['r_real'])}.</span> {dur_txt[0].upper()+dur_txt[1:]}.</h1></div>""")
         t = tipo(o.get("tipo","")) or (ph("[Rotura ZA · ORB · Momentum]") if PREVIEW else "")
@@ -99,7 +146,7 @@ def build(dia, imgdir):
     fecha_corta = f"{DIAS[f.weekday()]} {f.day} {MESES[f.month-1][:3]}"
     cuentas = dia.get("cuentas") or [{"nombre": "", "ops": dia["ops"]}]
     cuentas = [c for c in cuentas if c.get("ops")]
-    bodies = []
+    bodies = [portada(dia, cuentas, imgdir)]
     for c in cuentas:
         bodies += build_cuenta(c.get("nombre",""), c["ops"], imgdir, fecha_corta, len(cuentas))
     refl = (dia.get("reflexion") or "").strip()
