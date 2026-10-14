@@ -7,7 +7,8 @@ dia.json = {"fecha":"2026-10-09","reflexion":"<valoración del día>","ops":[{id
 Estructura (desde 14 oct 2026): portada con imagen de fondo (cuadro clásico) + resumen del día por cuenta ·
   por cada cuenta y cada trade: gráfico con su R y duración + idea del trade · reflexión del día · cierre.
 Portada: dia.json["portada"] = {"imagen": ruta (relativa al json o absoluta), "recorte": [x0,y0,x1,y1] en fracciones (opcional),
-  "desenfoque": px (def. 6), "oscuro": 0-1 (def. .55), "gris": false}. Sin "portada", fondo oscuro liso.
+  "desenfoque": px (def. 6), "oscuro": 0-1 (def. .55), "gris": false,
+  "completo": true para poner el cuadro entero (menos zoom) con "arriba": px desde arriba}. Sin "portada", fondo oscuro liso.
 Tipos del journal -> Instagram: Tipo 1 = Rotura ZA, Tipo 2 = ORB, Tipo 3 = Momentum.
 """
 import asyncio, base64, json, sys, os, datetime
@@ -75,7 +76,15 @@ def portada_fondo(cfg, basedir):
     if cfg.get("recorte"):
         x0, y0, x1, y1 = cfg["recorte"]; im = im.crop((int(x0*W), int(y0*H), int(x1*W), int(y1*H))); W, H = im.size
     obj = 4/5
-    if W/H > obj:
+    if cfg.get("completo"):  # cuadro entero (menos zoom) sobre un fondo hecho con el propio cuadro muy desenfocado
+        full = im.copy()
+        fw = 1160; fh = int(H * fw / W)
+        base = full.resize((int(W * 1450 / H), 1450), Image.LANCZOS)
+        x = (base.width - 1160) // 2; base = base.crop((x, 0, x + 1160, 1450)).filter(ImageFilter.GaussianBlur(40))
+        base = ImageEnhance.Brightness(base).enhance(0.55)
+        base.paste(full.resize((fw, fh), Image.LANCZOS), (0, int(cfg.get("arriba", 120))))
+        im = base; W, H = im.size
+    elif W/H > obj:
         nw = int(H*obj); cx = cfg.get("centro_x", .5); x = min(max(int(cx*W - nw/2), 0), W-nw); im = im.crop((x, 0, x+nw, H))
     else:
         nh = int(W/obj); im = im.crop((0, (H-nh)//2, W, (H-nh)//2+nh))
