@@ -8,7 +8,7 @@ Estructura (desde 14 oct 2026): portada con imagen de fondo (cuadro clásico) + 
   por cada cuenta y cada trade: gráfico con su R y duración + idea del trade · reflexión del día · cierre.
 Portada: dia.json["portada"] = {"imagen": ruta (relativa al json o absoluta), "recorte": [x0,y0,x1,y1] en fracciones (opcional),
   "desenfoque": px (def. 6), "oscuro": 0-1 (def. .55), "gris": false,
-  "completo": true para poner el cuadro entero (menos zoom) con "arriba": px desde arriba}. Sin "portada", fondo oscuro liso.
+  "completo": true para poner el cuadro entero (menos zoom) con "arriba": px desde arriba}. Sin "portada", fondo oscuro liso. "portada":"auto" elige de la colección tools/portadas/ (rota por fecha) o "portada":"<id>".
 Tipos del journal -> Instagram: Tipo 1 = Rotura ZA, Tipo 2 = ORB, Tipo 3 = Momentum.
 """
 import asyncio, base64, json, sys, os, datetime
@@ -99,6 +99,19 @@ def portada_fondo(cfg, basedir):
     return (f"<div class='bg' style=\"background-image:url(data:image/jpeg;base64,{b64})\"></div>"
             f"<div class='veil' style='background:linear-gradient(180deg,rgba(10,11,13,{k*.55:.2f}) 0%,rgba(10,11,13,{k*.7:.2f}) 40%,rgba(10,11,13,{min(k+.35,.95):.2f}) 100%)'></div>")
 
+def resolver_portada(dia):
+    """dia["portada"] == "auto" (o un id de la colección) -> config de tools/portadas/portadas.json. Rota por fecha."""
+    cfg = dia.get("portada")
+    if not isinstance(cfg, str): return cfg
+    base = os.path.join(os.path.dirname(os.path.abspath(__file__)), "portadas")
+    cat = json.load(open(os.path.join(base, "portadas.json")))["portadas"]
+    if cfg == "auto":
+        n = datetime.date.fromisoformat(dia["fecha"]).toordinal()
+        elegido = cat[n % len(cat)]
+    else:
+        elegido = next(c for c in cat if c["id"] == cfg)
+    out = dict(elegido); out["imagen"] = os.path.join(base, elegido["imagen"]); return out
+
 def portada(dia, cuentas, basedir):
     f = datetime.date.fromisoformat(dia["fecha"])
     fecha = f"{DIAS[f.weekday()]} {f.day} de {MESES[f.month-1]}"
@@ -112,7 +125,7 @@ def portada(dia, cuentas, basedir):
         nom = esc(c.get("nombre") or "Resultado")
         filas += (f"<div class='cta'><div><b>{nom}</b><i>{n} {'trade' if n==1 else 'trades'} · {' y '.join(ses)}</i></div>"
                   f"<span class='{'pos' if rt>=0 else 'neg'}'>{r(rt)}</span></div>")
-    return (portada_fondo(dia.get("portada"), basedir), f"<div class='cov'><div class='fecha'>{fecha}</div>{filas}</div>")
+    return (portada_fondo(resolver_portada(dia), basedir), f"<div class='cov'><div class='fecha'>{fecha}</div>{filas}</div>")
 
 def build_cuenta(nombre, ops, imgdir, fecha_corta, n_cuentas):
     ops = sorted(ops, key=lambda o: o["hora_entrada"])
