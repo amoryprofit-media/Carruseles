@@ -46,8 +46,8 @@ p{font-size:46px;line-height:1.32;color:#d9d5ce}
 .row{display:flex;gap:28px;align-items:center;border-top:2px solid #26292e;padding:24px 0}
 .row b{font-size:30px;letter-spacing:.1em;text-transform:uppercase;color:#7d7a74;font-weight:600;min-width:250px}
 .row span{font-size:46px;font-weight:500}
-.chart{width:100%;height:760px;border-radius:18px;overflow:hidden;margin-top:36px;background:#c5c5c5}
-.chart img{width:100%;height:100%;object-fit:cover;object-position:50% 46%}
+.chart{width:100%;height:900px;border-radius:18px;overflow:hidden;margin-top:36px;background:#c5c5c5}
+.chart img{width:100%;height:100%;object-fit:cover;object-position:50% 55%}
 .pos{color:#6fbf95}.neg{color:#d9776b}
 .bg{position:absolute;inset:-40px;background-size:cover;background-position:center;z-index:0}
 .veil{position:absolute;inset:0;z-index:1}
