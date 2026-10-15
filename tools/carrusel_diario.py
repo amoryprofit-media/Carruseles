@@ -127,7 +127,9 @@ def portada(dia, cuentas, basedir):
                   f"<span class='{'pos' if rt>=0 else 'neg'}'>{r(rt)}</span></div>")
     return (portada_fondo(resolver_portada(dia), basedir), f"<div class='cov'><div class='fecha'>{fecha}</div>{filas}</div>")
 
-def build_cuenta(nombre, ops, imgdir, fecha_corta, n_cuentas):
+def build_cuenta(nombre, ops, imgdir, fecha_corta, n_cuentas, merge_ids=()):
+    """merge_ids: ids de operaciones que, por límite de 10 imágenes de Instagram, van en UNA sola
+    diapositiva (gráfico reducido + resumen compacto) en vez de gráfico + "Idea de trade" por separado."""
     ops = sorted(ops, key=lambda o: o["hora_entrada"])
     rtot = sum(o["r_real"] for o in ops); cls = "pos" if rtot >= 0 else "neg"
     sesiones = []
@@ -136,18 +138,28 @@ def build_cuenta(nombre, ops, imgdir, fecha_corta, n_cuentas):
         if s not in sesiones: sesiones.append(s)
     n = len(ops)
     bodies = []
-    sub = f" · {esc(nombre)}" if nombre and n_cuentas > 1 else ""
     for i, o in enumerate(ops, 1):
         img = os.path.join(imgdir, o["id"] + ".png")
         b64 = base64.b64encode(open(img,'rb').read()).decode() if os.path.exists(img) else None
         c = "pos" if o["r_real"] >= 0 else "neg"
         dur = round(o.get("duracion_min") or 0)
         dur_txt = (f"{dur} minuto" if dur == 1 else f"{dur} minutos") if dur < 90 else f"{dur//60} h {dur%60:02d} min"
-        if b64: bodies.append(f"""<div class='kicker'>{(esc(nombre)+' · ') if nombre and n_cuentas > 1 else ''}{('Trade '+str(i)+' de '+str(n)+' · ') if n > 1 else ''}{sesion(o['hora_entrada'])}</div>
-          <div class='chart'><img src='data:image/png;base64,{b64}'></div>
-          <div style='margin-top:44px'><h1><span class='{c}'>{r(o['r_real'])}.</span> {dur_txt[0].upper()+dur_txt[1:]}.</h1></div>""")
+        kicker = f"<div class='kicker'>{(esc(nombre)+' · ') if nombre and n_cuentas > 1 else ''}{('Trade '+str(i)+' de '+str(n)+' · ') if n > 1 else ''}{sesion(o['hora_entrada'])}</div>"
         t = tipo(o.get("tipo","")) or (ph("[Rotura ZA · ORB · Momentum]") if PREVIEW else "")
         idea = (o.get("reflexion") or "").strip() or (ph("[Por qué entré: una o dos frases]") if PREVIEW else "")
+        if o["id"] in merge_ids:
+            # diapositiva única: gráfico más pequeño + resumen compacto, para no pasar de 10 imágenes
+            idea_corta = idea if len(idea) <= 200 or idea.startswith('<span') else idea[:197].rstrip() + "…"
+            fila_setup = f"<div class='row' style='padding:16px 0'><b style=\"min-width:200px;font-size:24px\">Setup</b><span style=\"font-size:36px\">{t}</span></div>" if t else ""
+            if b64: bodies.append(f"""{kicker}
+              <div class='chart' style='height:560px'><img src='data:image/png;base64,{b64}'></div>
+              <div style='margin-top:30px'><h2><span class='{c}'>{r(o['r_real'])}</span> · {dur_txt}</h2></div>
+              {fila_setup}
+              {f"<p style='font-size:32px;margin-top:14px;color:#d9d5ce'>{esc(idea_corta) if not idea.startswith('<span') else idea}</p>" if idea else ""}""")
+            continue
+        if b64: bodies.append(f"""{kicker}
+          <div class='chart'><img src='data:image/png;base64,{b64}'></div>
+          <div style='margin-top:44px'><h1><span class='{c}'>{r(o['r_real'])}.</span> {dur_txt[0].upper()+dur_txt[1:]}.</h1></div>""")
         fila_setup = f"<div class='row'><b>Setup</b><span>{t}</span></div>" if t else ""
         det = []
         if n > 1: det.append(f"{i} de {n}")
@@ -168,17 +180,37 @@ def build(dia, imgdir):
     fecha_corta = f"{DIAS[f.weekday()]} {f.day} {MESES[f.month-1][:3]}"
     cuentas = dia.get("cuentas") or [{"nombre": "", "ops": dia["ops"]}]
     cuentas = [c for c in cuentas if c.get("ops")]
+
+    # Instagram no admite carruseles de más de 10 imágenes (límite de la plataforma, 15 oct 2026).
+    # Diapositivas fijas: portada + reflexión/cierre combinados = 2. Cada trade ocupa 2 (gráfico + idea)
+    # salvo que haga falta "fundir" algunas en 1 sola (gráfico reducido + resumen) para no pasar de 10.
+    todas_ops = [o for c in cuentas for o in sorted(c["ops"], key=lambda o: o["hora_entrada"])]
+    n_ops = len(todas_ops)
+    merges_necesarios = max(0, min(n_ops, 2 * n_ops - 8))
+    # se funden primero las últimas operaciones del día (las primeras conservan el detalle completo)
+    merge_ids = {o["id"] for o in todas_ops[n_ops - merges_necesarios:]} if merges_necesarios else set()
+
     bodies = [portada(dia, cuentas, imgdir)]
     for c in cuentas:
-        bodies += build_cuenta(c.get("nombre",""), c["ops"], imgdir, fecha_corta, len(cuentas))
+        bodies += build_cuenta(c.get("nombre",""), c["ops"], imgdir, fecha_corta, len(cuentas), merge_ids)
+
     refl = (dia.get("reflexion") or "").strip()
+    cierre = """<h1 style='font-size:80px;line-height:1.05'>Somos lo que hacemos repetidamente.</h1>
+      <p style='font-size:30px;color:#7d7a74'>Will Durant</p>
+      <p style='font-size:42px;color:#4f8a6f;font-weight:600;margin-top:26px'>Paso corto, vista larga.</p>"""
     if refl or PREVIEW:
         txt = esc(refl) if refl else ph("[Lección del día]")
-        fs = 54 if len(refl) < 220 else 44
-        bodies.append(f"""<div class='head'>Reflexión del día</div><div class='mid'><p style='font-size:{fs}px;line-height:1.3'>{txt}</p></div>""")
-    bodies.append("""<div class='mid'><h1 style='font-size:96px;line-height:1.05'>Somos lo que hacemos repetidamente.</h1>
-      <p style='font-size:34px;color:#7d7a74'>Will Durant</p>
-      <p style='font-size:46px;color:#4f8a6f;font-weight:600;margin-top:30px'>Paso corto, vista larga.</p></div>""")
+        fs = 44 if len(refl) < 220 else 36
+        bodies.append(f"""<div class='head'>Reflexión del día</div><div class='mid' style='gap:56px'>
+          <p style='font-size:{fs}px;line-height:1.3'>{txt}</p>
+          <div style='border-top:2px solid #26292e;padding-top:40px'>{cierre}</div></div>""")
+    else:
+        bodies.append(f"<div class='mid'>{cierre}</div>")
+    total = len(bodies)
+    if total > 10:
+        # salvaguarda extrema (más de 8 trades en un día): se mantiene el límite recortando el cierre,
+        # nunca el dato de un trade.
+        bodies = bodies[:10]
     total = len(bodies)
     return [page(b, k+1, total) for k, b in enumerate(bodies)]
 
