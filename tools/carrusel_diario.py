@@ -14,7 +14,7 @@ Tipos del journal -> Instagram: Tipo 1 = Rotura ZA, Tipo 2 = ORB, Tipo 3 = Momen
 import asyncio, base64, json, sys, os, datetime
 from playwright.async_api import async_playwright
 
-TIPOS = {"1":"Rotura ZA","tipo 1":"Rotura ZA","2":"ORB","tipo 2":"ORB","3":"Momentum","tipo 3":"Momentum"}
+TIPOS = {"1":"Rotura ZA","tipo 1":"Rotura ZA","2":"ORB","tipo 2":"ORB","3":"Momentum","tipo 3":"Momentum","london 1":"EMA Trend","london 2":"FVG Reversal"}
 DIAS = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"]
 MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"]
 CIERRES = {
