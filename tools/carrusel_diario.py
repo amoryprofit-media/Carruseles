@@ -65,8 +65,9 @@ def page(body, n, total, label="Diario"):
         return f"<html><head><meta charset='utf-8'><style>{CSS}</style></head><body>{fondo}<div class='band' style='z-index:3'></div>{encima}<div class='foot' style='z-index:3;color:#cfc8bd'><span>@amoryprofit</span><span>{n}/{total}</span></div></body></html>"
     return f"<html><head><meta charset='utf-8'><style>{CSS}</style></head><body><div class='band'></div><div class='wrap'>{body}</div><div class='foot'><span>@amoryprofit</span><span>{n}/{total}</span></div></body></html>"
 
-def portada_fondo(cfg, basedir):
-    """Recorta a 4:5 y devuelve el html del fondo (imagen desenfocada y oscurecida)."""
+def portada_fondo(cfg, basedir, extra_blur=0):
+    """Recorta a 4:5 y devuelve el html del fondo (imagen desenfocada y oscurecida).
+    extra_blur: desenfoque adicional (los cierres usan el mismo fondo de la portada, más difuminado)."""
     if not cfg or not cfg.get("imagen"):
         return "<div class='veil' style='background:#0f1114'></div>"
     from PIL import Image, ImageFilter, ImageEnhance
@@ -91,7 +92,7 @@ def portada_fondo(cfg, basedir):
     im = im.resize((1160, 1450), Image.LANCZOS)
     if cfg.get("gris"): im = ImageEnhance.Color(im).enhance(0)
     else: im = ImageEnhance.Color(im).enhance(cfg.get("color", .8))
-    d = cfg.get("desenfoque", 6)
+    d = cfg.get("desenfoque", 6) + extra_blur
     if d: im = im.filter(ImageFilter.GaussianBlur(d))
     buf = io.BytesIO(); im.save(buf, "JPEG", quality=88)
     b64 = base64.b64encode(buf.getvalue()).decode()
@@ -182,11 +183,17 @@ def build(dia, imgdir):
     cuentas = [c for c in cuentas if c.get("ops")]
 
     # Instagram no admite carruseles de más de 10 imágenes (límite de la plataforma, 15 oct 2026).
-    # Diapositivas fijas: portada + reflexión/cierre combinados = 2. Cada trade ocupa 2 (gráfico + idea)
-    # salvo que haga falta "fundir" algunas en 1 sola (gráfico reducido + resumen) para no pasar de 10.
+    # Reparto de diapositivas (máximo 10):
+    #  - con reflexión y hasta 7 trades: portada + trades + reflexión en su diapositiva + cierre en la suya (3 fijas);
+    #  - si no cabe (8 trades): reflexión y cierre comparten diapositiva (2 fijas).
+    # Cada trade ocupa 2 (gráfico + idea) salvo que haga falta "fundir" algunas en 1 sola para no pasar de 10.
     todas_ops = [o for c in cuentas for o in sorted(c["ops"], key=lambda o: o["hora_entrada"])]
     n_ops = len(todas_ops)
-    merges_necesarios = max(0, min(n_ops, 2 * n_ops - 8))
+    refl = (dia.get("reflexion") or "").strip()
+    hay_refl = bool(refl or PREVIEW)
+    separar = hay_refl and n_ops <= 7
+    fijas = 3 if separar else 2
+    merges_necesarios = max(0, min(n_ops, 2 * n_ops - (10 - fijas)))
     # se funden primero las últimas operaciones del día (las primeras conservan el detalle completo)
     merge_ids = {o["id"] for o in todas_ops[n_ops - merges_necesarios:]} if merges_necesarios else set()
 
@@ -194,18 +201,25 @@ def build(dia, imgdir):
     for c in cuentas:
         bodies += build_cuenta(c.get("nombre",""), c["ops"], imgdir, fecha_corta, len(cuentas), merge_ids)
 
-    refl = (dia.get("reflexion") or "").strip()
     cierre = """<h1 style='font-size:80px;line-height:1.05'>Somos lo que hacemos repetidamente.</h1>
       <p style='font-size:30px;color:#7d7a74'>Will Durant</p>
       <p style='font-size:42px;color:#4f8a6f;font-weight:600;margin-top:26px'>Paso corto, vista larga.</p>"""
-    if refl or PREVIEW:
+    # El cierre lleva el fondo de la portada, más difuminado (extra_blur).
+    fondo_cierre = portada_fondo(resolver_portada(dia), imgdir, extra_blur=8)
+    def con_fondo(html): return (fondo_cierre, f"<div class='wrap' style='z-index:3'>{html}</div>")
+    if hay_refl:
         txt = esc(refl) if refl else ph("[Lección del día]")
         fs = 44 if len(refl) < 220 else 36
-        bodies.append(f"""<div class='head'>Reflexión del día</div><div class='mid' style='gap:56px'>
-          <p style='font-size:{fs}px;line-height:1.3'>{txt}</p>
-          <div style='border-top:2px solid #26292e;padding-top:40px'>{cierre}</div></div>""")
+        if separar:
+            bodies.append(f"""<div class='head'>Reflexión del día</div><div class='mid' style='gap:56px'>
+              <p style='font-size:{fs}px;line-height:1.3'>{txt}</p></div>""")
+            bodies.append(con_fondo(f"<div class='mid'>{cierre}</div>"))
+        else:
+            bodies.append(con_fondo(f"""<div class='head'>Reflexión del día</div><div class='mid' style='gap:56px'>
+              <p style='font-size:{fs}px;line-height:1.3'>{txt}</p>
+              <div style='border-top:2px solid rgba(241,238,232,.22);padding-top:40px'>{cierre}</div></div>"""))
     else:
-        bodies.append(f"<div class='mid'>{cierre}</div>")
+        bodies.append(con_fondo(f"<div class='mid'>{cierre}</div>"))
     total = len(bodies)
     if total > 10:
         # salvaguarda extrema (más de 8 trades en un día): se mantiene el límite recortando el cierre,
