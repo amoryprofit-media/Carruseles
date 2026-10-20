@@ -22,6 +22,7 @@ CIERRES = {
  2: ("Sigo.", None),
  3: ("Todavía no.<br>Pero sigo.", None),
 }
+V2 = False
 def r(x): s=f"{x:+.2f}".replace('.',',').replace('+','+').replace('-','−'); return s+"R"
 def sesion(h): return "Londres" if int(h.split(':')[0]) < 14 else "Nueva York"
 def tipo(t): return TIPOS.get(str(t).strip().lower(), None)
@@ -156,7 +157,7 @@ def build_cuenta(nombre, ops, imgdir, fecha_corta, n_cuentas, merge_ids=()):
             idea_corta = idea if len(idea) <= 200 or idea.startswith('<span') else idea[:197].rstrip() + "…"
             fila_setup = f"<div class='row' style='padding:16px 0'><b style=\"min-width:200px;font-size:24px\">Setup</b><span style=\"font-size:36px\">{t}</span></div>" if t else ""
             if b64: bodies.append(f"""{kicker}
-              <div class='chart' style='height:560px'><img src='data:image/png;base64,{b64}'></div>
+              <div class='chart' style='height:{640 if V2 else 560}px{";padding:14px;background:#181b20;border:2px solid #2c3036" if V2 else ""}'><img src='data:image/png;base64,{b64}'{" style='border-radius:10px'" if V2 else ""}></div>
               <div style='margin-top:30px'><h2><span class='{c}'>{r(o['r_real'])}</span> · {dur_txt}</h2></div>
               {fila_setup}
               {f"<p style='font-size:32px;margin-top:14px;color:#d9d5ce'>{esc(idea_corta) if not idea.startswith('<span') else idea}</p>" if idea else ""}""")
@@ -199,6 +200,7 @@ def build(dia, imgdir):
     merges_necesarios = max(0, min(n_ops, 2 * n_ops - (10 - fijas)))
     # se funden primero las últimas operaciones del día (las primeras conservan el detalle completo)
     merge_ids = {o["id"] for o in todas_ops[n_ops - merges_necesarios:]} if merges_necesarios else set()
+    if V2: merge_ids = {o["id"] for o in todas_ops}  # v2: un trade = una diapositiva (gráfico + resumen)
 
     bodies = [portada(dia, cuentas, imgdir)]
     for c in cuentas:
@@ -213,7 +215,14 @@ def build(dia, imgdir):
     if hay_refl:
         txt = esc(refl) if refl else ph("[Lección del día]")
         fs = 44 if len(refl) < 220 else 36
-        if separar:
+        if separar and V2:
+            rt = sum(o["r_real"] for c in cuentas for o in c["ops"]); cl = "pos" if rt >= 0 else "neg"
+            fs2 = 56 if len(refl) < 200 else 48
+            bodies.append(f"""<div class='head'>Reflexión del día</div><div class='mid' style='gap:48px'>
+              <div class='big {cl}' style='font-size:190px'>{r(rt)}</div>
+              <p style='font-size:{fs2}px;line-height:1.3'>{txt}</p></div>""")
+            bodies.append(con_fondo(f"<div class='mid'>{cierre}</div>"))
+        elif separar:
             bodies.append(f"""<div class='head'>Reflexión del día</div><div class='mid' style='gap:56px'>
               <p style='font-size:{fs}px;line-height:1.3'>{txt}</p></div>""")
             bodies.append(con_fondo(f"<div class='mid'>{cierre}</div>"))
@@ -244,5 +253,6 @@ async def render(pages, out, prefix):
 if __name__ == "__main__":
     dia = json.load(open(sys.argv[1])); out = sys.argv[2]
     PREVIEW = "--preview" in sys.argv
+    V2 = "--v2" in sys.argv
     pages = build(dia, os.path.dirname(os.path.abspath(sys.argv[1])))
     for p in asyncio.run(render(pages, out, dia["fecha"])): print(p)
