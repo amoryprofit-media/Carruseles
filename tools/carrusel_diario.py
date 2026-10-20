@@ -208,7 +208,7 @@ def build(dia, imgdir):
       <p style='font-size:30px;color:#7d7a74'>Will Durant</p>
       <p style='font-size:42px;color:#4f8a6f;font-weight:600;margin-top:26px'>Paso corto, vista larga.</p>"""
     # El cierre lleva el fondo de la portada, más difuminado (extra_blur).
-    fondo_cierre = portada_fondo(resolver_portada(dia), imgdir, extra_blur=8, extra_oscuro=.2)
+    fondo_cierre = portada_fondo(resolver_portada(dia), imgdir, extra_blur=5, extra_oscuro=.2)
     def con_fondo(html): return (fondo_cierre, f"<div class='wrap' style='z-index:3'>{html}</div>")
     if hay_refl:
         txt = esc(refl) if refl else ph("[Lección del día]")
