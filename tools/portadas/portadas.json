@@ -6,88 +6,99 @@
    "imagen": "caminante.jpg",
    "centro_x": 0.5,
    "desenfoque": 3,
-   "oscuro": 0.5,
-   "color": 0.88
+   "oscuro": 0.35,
+   "color": 1.25,
+   "brillo": 1.12
   },
   {
    "id": "velde",
    "imagen": "velde.jpg",
    "centro_x": 0.5,
    "desenfoque": 3,
-   "oscuro": 0.5,
-   "color": 0.88
+   "oscuro": 0.35,
+   "color": 1.25,
+   "brillo": 1.12
   },
   {
    "id": "mujer_sol",
    "imagen": "mujer_sol.jpg",
    "centro_x": 0.5,
    "desenfoque": 3,
-   "oscuro": 0.5,
-   "color": 0.88
+   "oscuro": 0.35,
+   "color": 1.25,
+   "brillo": 1.12
   },
   {
    "id": "backhuysen",
    "imagen": "backhuysen.jpg",
    "centro_x": 0.6,
    "desenfoque": 3,
-   "oscuro": 0.5,
-   "color": 0.88
+   "oscuro": 0.35,
+   "color": 1.25,
+   "brillo": 1.12
   },
   {
    "id": "dos_hombres_luna",
    "imagen": "dos_hombres_luna.jpg",
    "centro_x": 0.3,
    "desenfoque": 3,
-   "oscuro": 0.5,
-   "color": 0.88
+   "oscuro": 0.35,
+   "color": 1.25,
+   "brillo": 1.12
   },
   {
    "id": "achenbach",
    "imagen": "achenbach.jpg",
    "centro_x": 0.4,
    "desenfoque": 3,
-   "oscuro": 0.5,
-   "color": 0.88
+   "oscuro": 0.35,
+   "color": 1.25,
+   "brillo": 1.12
   },
   {
    "id": "luna_mar",
    "imagen": "luna_mar.jpg",
    "centro_x": 0.5,
    "desenfoque": 3,
-   "oscuro": 0.5,
-   "color": 0.88
+   "oscuro": 0.35,
+   "color": 1.25,
+   "brillo": 1.12
   },
   {
    "id": "rembrandt",
    "imagen": "rembrandt.jpg",
    "centro_x": 0.5,
    "desenfoque": 3,
-   "oscuro": 0.5,
-   "color": 0.88
+   "oscuro": 0.35,
+   "color": 1.25,
+   "brillo": 1.12
   },
   {
    "id": "peregrino",
    "imagen": "peregrino.jpg",
    "centro_x": 0.5,
    "desenfoque": 3,
-   "oscuro": 0.5,
-   "color": 0.88
+   "oscuro": 0.35,
+   "color": 1.25,
+   "brillo": 1.12
   },
   {
    "id": "etapas_vida",
    "imagen": "etapas_vida.jpg",
    "centro_x": 0.42,
    "desenfoque": 3,
-   "oscuro": 0.5,
-   "color": 0.88
+   "oscuro": 0.35,
+   "color": 1.25,
+   "brillo": 1.12
   },
   {
    "id": "sierra_nevada",
    "imagen": "sierra_nevada.jpg",
    "centro_x": 0.45,
    "desenfoque": 3,
-   "oscuro": 0.5,
-   "color": 0.88
+   "oscuro": 0.35,
+   "color": 1.25,
+   "brillo": 1.12
   }
  ]
 }

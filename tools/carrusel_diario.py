@@ -65,7 +65,7 @@ def page(body, n, total, label="Diario"):
         return f"<html><head><meta charset='utf-8'><style>{CSS}</style></head><body>{fondo}<div class='band' style='z-index:3'></div>{encima}<div class='foot' style='z-index:3;color:#cfc8bd'><span>@amoryprofit</span><span>{n}/{total}</span></div></body></html>"
     return f"<html><head><meta charset='utf-8'><style>{CSS}</style></head><body><div class='band'></div><div class='wrap'>{body}</div><div class='foot'><span>@amoryprofit</span><span>{n}/{total}</span></div></body></html>"
 
-def portada_fondo(cfg, basedir, extra_blur=0):
+def portada_fondo(cfg, basedir, extra_blur=0, extra_oscuro=0):
     """Recorta a 4:5 y devuelve el html del fondo (imagen desenfocada y oscurecida).
     extra_blur: desenfoque adicional (los cierres usan el mismo fondo de la portada, más difuminado)."""
     if not cfg or not cfg.get("imagen"):
@@ -91,14 +91,16 @@ def portada_fondo(cfg, basedir, extra_blur=0):
         nh = int(W/obj); im = im.crop((0, (H-nh)//2, W, (H-nh)//2+nh))
     im = im.resize((1160, 1450), Image.LANCZOS)
     if cfg.get("gris"): im = ImageEnhance.Color(im).enhance(0)
-    else: im = ImageEnhance.Color(im).enhance(cfg.get("color", .8))
+    else: im = ImageEnhance.Color(im).enhance(cfg.get("color", 1.25))
+    if not cfg.get("gris"): im = ImageEnhance.Brightness(im).enhance(cfg.get("brillo", 1.12))
     d = cfg.get("desenfoque", 6) + extra_blur
     if d: im = im.filter(ImageFilter.GaussianBlur(d))
     buf = io.BytesIO(); im.save(buf, "JPEG", quality=88)
     b64 = base64.b64encode(buf.getvalue()).decode()
-    k = cfg.get("oscuro", .55)
+    k = cfg.get("oscuro", .35) + extra_oscuro
+    # velo ligero arriba (el cuadro se ve luminoso y con color) y más oscuro solo abajo, donde va el texto
     return (f"<div class='bg' style=\"background-image:url(data:image/jpeg;base64,{b64})\"></div>"
-            f"<div class='veil' style='background:linear-gradient(180deg,rgba(10,11,13,{k*.55:.2f}) 0%,rgba(10,11,13,{k*.7:.2f}) 40%,rgba(10,11,13,{min(k+.35,.95):.2f}) 100%)'></div>")
+            f"<div class='veil' style='background:linear-gradient(180deg,rgba(10,11,13,{k*.15:.2f}) 0%,rgba(10,11,13,{k*.25:.2f}) 45%,rgba(10,11,13,{min(k+.25,.9):.2f}) 100%)'></div>")
 
 def resolver_portada(dia):
     """dia["portada"] == "auto" (o un id de la colección) -> config de tools/portadas/portadas.json. Rota por fecha."""
@@ -205,7 +207,7 @@ def build(dia, imgdir):
       <p style='font-size:30px;color:#7d7a74'>Will Durant</p>
       <p style='font-size:42px;color:#4f8a6f;font-weight:600;margin-top:26px'>Paso corto, vista larga.</p>"""
     # El cierre lleva el fondo de la portada, más difuminado (extra_blur).
-    fondo_cierre = portada_fondo(resolver_portada(dia), imgdir, extra_blur=8)
+    fondo_cierre = portada_fondo(resolver_portada(dia), imgdir, extra_blur=8, extra_oscuro=.2)
     def con_fondo(html): return (fondo_cierre, f"<div class='wrap' style='z-index:3'>{html}</div>")
     if hay_refl:
         txt = esc(refl) if refl else ph("[Lección del día]")
