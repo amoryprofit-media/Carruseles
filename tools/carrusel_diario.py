@@ -110,7 +110,8 @@ def resolver_portada(dia):
     cat = json.load(open(os.path.join(base, "portadas.json")))["portadas"]
     if cfg == "auto":
         n = datetime.date.fromisoformat(dia["fecha"]).toordinal()
-        elegido = cat[n % len(cat)]
+        claras = [c for c in cat if c.get("auto", True)]  # los cuadros oscuros ("auto": false) no entran en la rotación
+        elegido = claras[n % len(claras)]
     else:
         elegido = next(c for c in cat if c["id"] == cfg)
     out = dict(elegido); out["imagen"] = os.path.join(base, elegido["imagen"]); return out

@@ -44,7 +44,8 @@
    "desenfoque": 3,
    "oscuro": 0.35,
    "color": 1.25,
-   "brillo": 1.12
+   "brillo": 1.12,
+   "auto": false
   },
   {
    "id": "achenbach",
@@ -71,7 +72,8 @@
    "desenfoque": 3,
    "oscuro": 0.35,
    "color": 1.25,
-   "brillo": 1.12
+   "brillo": 1.12,
+   "auto": false
   },
   {
    "id": "peregrino",
@@ -80,7 +82,8 @@
    "desenfoque": 3,
    "oscuro": 0.35,
    "color": 1.25,
-   "brillo": 1.12
+   "brillo": 1.12,
+   "auto": false
   },
   {
    "id": "etapas_vida",
