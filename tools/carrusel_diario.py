@@ -204,9 +204,9 @@ def build(dia, imgdir):
     for c in cuentas:
         bodies += build_cuenta(c.get("nombre",""), c["ops"], imgdir, fecha_corta, len(cuentas), merge_ids)
 
-    cierre = """<h1 style='font-size:80px;line-height:1.05'>Somos lo que hacemos repetidamente.</h1>
-      <p style='font-size:30px;color:#7d7a74'>Will Durant</p>
-      <p style='font-size:42px;color:#4f8a6f;font-weight:600;margin-top:26px'>Paso corto, vista larga.</p>"""
+    cierre = """<h1 style='font-size:80px;line-height:1.05;text-shadow:0 2px 18px rgba(0,0,0,.55)'>Somos lo que hacemos repetidamente.</h1>
+      <p style='font-size:32px;color:#e2ddd2'>Will Durant</p>
+      <p style='font-size:44px;color:#9be0bd;font-weight:700;margin-top:26px;text-shadow:0 2px 14px rgba(0,0,0,.55)'>Paso corto, vista larga.</p>"""
     # El cierre lleva el fondo de la portada, más difuminado (extra_blur).
     fondo_cierre = portada_fondo(resolver_portada(dia), imgdir, extra_blur=5, extra_oscuro=.2)
     def con_fondo(html): return (fondo_cierre, f"<div class='wrap' style='z-index:3'>{html}</div>")
