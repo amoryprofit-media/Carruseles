@@ -1,5 +1,5 @@
 {
- "nota": "Colección de portadas del diario (dominio público, Wikimedia Commons). 'auto' rota por fecha.",
+ "nota": "Colección de portadas del diario (dominio público, Wikimedia Commons). 'auto' rota por fecha SOLO entre las marcadas auto:true: gama fría gris-azulada y apagada, coherente con el feed. Fuera de la rotación (auto:false): cuadros muy oscuros (dos_hombres_luna, peregrino) o de colores muy vivos/cálidos (mujer_sol, etapas_vida, sierra_nevada, rembrandt).",
  "portadas": [
   {
    "id": "caminante",
@@ -8,7 +8,8 @@
    "desenfoque": 6,
    "oscuro": 0.35,
    "color": 1.25,
-   "brillo": 1.12
+   "brillo": 1.12,
+   "auto": true
   },
   {
    "id": "velde",
@@ -17,7 +18,8 @@
    "desenfoque": 6,
    "oscuro": 0.35,
    "color": 1.25,
-   "brillo": 1.12
+   "brillo": 1.12,
+   "auto": true
   },
   {
    "id": "mujer_sol",
@@ -26,7 +28,8 @@
    "desenfoque": 6,
    "oscuro": 0.35,
    "color": 1.25,
-   "brillo": 1.12
+   "brillo": 1.12,
+   "auto": false
   },
   {
    "id": "backhuysen",
@@ -35,7 +38,8 @@
    "desenfoque": 6,
    "oscuro": 0.35,
    "color": 1.25,
-   "brillo": 1.12
+   "brillo": 1.12,
+   "auto": true
   },
   {
    "id": "dos_hombres_luna",
@@ -54,7 +58,8 @@
    "desenfoque": 6,
    "oscuro": 0.35,
    "color": 1.25,
-   "brillo": 1.12
+   "brillo": 1.12,
+   "auto": true
   },
   {
    "id": "luna_mar",
@@ -63,7 +68,8 @@
    "desenfoque": 6,
    "oscuro": 0.35,
    "color": 1.25,
-   "brillo": 1.12
+   "brillo": 1.12,
+   "auto": true
   },
   {
    "id": "rembrandt",
@@ -92,7 +98,8 @@
    "desenfoque": 6,
    "oscuro": 0.35,
    "color": 1.25,
-   "brillo": 1.12
+   "brillo": 1.12,
+   "auto": false
   },
   {
    "id": "sierra_nevada",
@@ -101,7 +108,8 @@
    "desenfoque": 6,
    "oscuro": 0.35,
    "color": 1.25,
-   "brillo": 1.12
+   "brillo": 1.12,
+   "auto": false
   }
  ]
 }
