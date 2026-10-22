@@ -237,8 +237,16 @@ def build(dia, imgdir):
         if separar and V2:
             rt = sum(o["r_real"] for c in cuentas for o in c["ops"]); cl = "pos" if rt >= 0 else "neg"
             fs2 = 56 if len(refl) < 200 else 48
+            if len(cuentas) > 1:  # cada cuenta por separado (regla de Ivan, 13 oct 2026): nunca sumar R de cuentas distintas
+                filas = ""
+                for c in cuentas:
+                    rc = sum(o["r_real"] for o in c["ops"]); clc = "pos" if rc >= 0 else "neg"
+                    filas += f"<div style='display:flex;justify-content:space-between;align-items:baseline'><span style='font-size:46px;font-weight:600;color:#e9e4da'>{esc(c.get('nombre',''))}</span><span class='big {clc}' style='font-size:120px'>{r(rc)}</span></div>"
+                bigr = f"<div style='display:flex;flex-direction:column;gap:18px'>{filas}</div>"
+            else:
+                bigr = f"<div class='big {cl}' style='font-size:190px'>{r(rt)}</div>"
             bodies.append(f"""<div class='head'>Reflexión del día</div><div class='mid' style='gap:48px'>
-              <div class='big {cl}' style='font-size:190px'>{r(rt)}</div>
+              {bigr}
               <p style='font-size:{fs2}px;line-height:1.3'>{txt}</p></div>""")
             bodies.append(con_fondo(f"<div class='mid'>{cierre}</div>"))
         elif separar:
