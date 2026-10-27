@@ -1,6 +1,7 @@
 """Vida real @amoryprofit: carrusel de 3 imágenes.
 1 foto + gancho · 2 reflexión larga sobre la foto desenfocada · 3 foto muy desenfocada + frase final + lema.
-Uso: python3 vida3.py foto_filtrada.jpg salida_prefijo "Gancho" "Titular diapo 2" "Párrafo diapo 2" "Frase diapo 3"
+Uso: python3 vida3.py foto_filtrada.jpg salida_prefijo "Gancho" "Titular diapo 2" "Párrafo diapo 2" "Frase diapo 3" ["Subtítulo portada"]
+Estilo v5 (27 oct 2026): portada con gancho en naranja vivo #FF7A2F y subtítulo opcional en blanco roto #F3EEE4; sin franja lateral.
 Sin nombre de pilar; pie solo @amoryprofit y número."""
 import asyncio, base64, sys
 from io import BytesIO
@@ -8,6 +9,7 @@ from PIL import Image, ImageFilter, ImageEnhance
 from playwright.async_api import async_playwright
 
 foto, out, gancho, titular, parrafo, final = sys.argv[1:7]
+sub = sys.argv[7] if len(sys.argv) > 7 else ""
 BAND = "#8a9bb0"
 
 def b64(im):
@@ -20,8 +22,8 @@ f3 = b64(ImageEnhance.Brightness(im.filter(ImageFilter.GaussianBlur(60))).enhanc
 
 BASE = """*{margin:0;box-sizing:border-box}
 body{width:1080px;height:1350px;position:relative;overflow:hidden;font-family:'Inter Display','Inter',sans-serif;color:#f5f0e8}
-.band{position:absolute;left:0;top:0;bottom:0;width:18px;background:%s;z-index:3}
-.f{position:absolute;left:96px;right:84px;bottom:56px;display:flex;justify-content:space-between;font-size:26px;color:#cfc8bd;z-index:3}
+.band{display:none;background:%s}
+.f{position:absolute;left:84px;right:84px;bottom:56px;display:flex;justify-content:space-between;font-size:26px;color:#cfc8bd;z-index:3}
 .w{position:absolute;left:96px;right:96px;top:0;bottom:130px;display:flex;flex-direction:column;justify-content:center;gap:34px}
 .h{font-weight:800;line-height:1.08;letter-spacing:-.02em;text-wrap:balance;text-shadow:0 2px 16px rgba(0,0,0,.5)}
 .l{font-size:44px;color:#b9c6d6;font-weight:600;margin-top:20px}""" % BAND
@@ -29,8 +31,10 @@ body{width:1080px;height:1350px;position:relative;overflow:hidden;font-family:'I
 S1 = f"""<html><head><meta charset='utf-8'><style>{BASE}
 body{{background:url(data:image/jpeg;base64,{f1}) center/cover}}
 .g{{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,11,13,0) 35%,rgba(10,11,13,.55) 62%,rgba(10,11,13,.92) 100%)}}
-.h1{{position:absolute;left:96px;right:96px;bottom:150px;font-size:92px;z-index:2}}
-</style></head><body><div class='band'></div><div class='g'></div><div class='h h1'>{gancho}</div>
+.h1{{position:absolute;left:84px;right:110px;bottom:132px;z-index:2}}
+.h1 .g1{{font-size:86px;color:#FF7A2F}}
+.h1 .g2{{font-size:42px;font-weight:600;color:#F3EEE4;line-height:1.22;letter-spacing:-.005em;margin-top:22px}}
+</style></head><body><div class='band'></div><div class='g'></div><div class='h h1'><div class='g1'>{gancho}</div>{f"<div class='g2'>{sub}</div>" if sub else ''}</div>
 <div class='f'><span>@amoryprofit</span><span>1/3</span></div></body></html>"""
 
 S2 = f"""<html><head><meta charset='utf-8'><style>{BASE}

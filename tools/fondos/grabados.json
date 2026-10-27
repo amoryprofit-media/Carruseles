@@ -1,0 +1,5 @@
+{"nota": "Grabados para mentalidad (estilo v5). Se elige uno ad hoc según el tema; si ninguno encaja, se busca otro en Wikimedia Commons (dominio público o CC0) en conversación con Ivan. Estilo: que se vea dibujo, línea y trama visibles, tonos medios; ni muy oscuros/nocturnos ni de línea esquemática. Sin desnudos frontales ni cadáveres.",
+ "grabados": [
+  {"id": "quijote", "imagen": "quijote.jpg", "foco": [0.5, 0.42], "temas": ["pelear contra el mercado", "enemigos imaginarios", "obsesión", "idealismo"], "obra": "Aventura de los molinos (Don Quijote)", "autor": "Gustave Doré", "fuente": "https://commons.wikimedia.org/wiki/File:Adventure_with_the_Windmills.jpg", "licencia": "Dominio público"},
+  {"id": "hidra", "imagen": "hidra.jpg", "foco": [0.5, 0.0], "temas": ["revancha", "recuperar pérdidas", "sobreoperar", "problemas que se multiplican"], "obra": "Hércules mata a la Hidra de Lerna", "autor": "Battista Franco Veneziano", "fuente": "https://commons.wikimedia.org/wiki/File:Hercules_Killing_the_Hydra_of_Lerna.jpg", "licencia": "Dominio público", "aviso": "foco [0.5, 0.0] obligatorio: recorta por arriba para evitar el desnudo"}
+ ]}

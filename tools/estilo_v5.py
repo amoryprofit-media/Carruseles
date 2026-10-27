@@ -126,11 +126,13 @@ def mentalidad_portada(grabado, g1, g2, n=1, t=4, foco=(.5, .5), papel=None, caj
             f"<div class='g2' style='font-size:40px;color:{TINTA};margin-top:26px'>{e(g2)}</div></div>")
     return page(body, n, t, claro=True, papel=papel)
 
-def mentalidad_interior(titulo, texto, n, t, papel=None):
+def mentalidad_interior(titulo, texto, n, t, papel=None, lema=False):
     body = (f"<div style='position:absolute;left:96px;right:96px;top:0;bottom:120px;display:flex;flex-direction:column;justify-content:center'>"
             f"<div style='font-size:30px;font-weight:700;letter-spacing:.14em;color:{NARANJA}'>{n:02d}</div>"
             f"<div class='g1' style='font-size:66px;color:{NARANJA};margin-top:26px'>{e(titulo)}</div>"
-            f"<div style='font-size:42px;line-height:1.38;color:{TINTA};margin-top:34px;font-weight:450'>{e(texto)}</div></div>")
+            f"<div style='font-size:42px;line-height:1.38;color:{TINTA};margin-top:34px;font-weight:450'>{e(texto)}</div>"
+            + (f"<div style='font-size:40px;font-weight:700;color:{TINTA};margin-top:56px'>Paso corto, vista larga.</div>" if lema else "")
+            + "</div>")
     return page(body, n, t, claro=True, papel=papel)
 
 VIDA = {  # variantes de color para vida real
