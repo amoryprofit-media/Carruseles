@@ -10,8 +10,14 @@ Portada: dia.json["portada"] = {"imagen": ruta (relativa al json o absoluta), "r
   "desenfoque": px (def. 6), "oscuro": 0-1 (def. .55), "gris": false,
   "completo": true para poner el cuadro entero (menos zoom) con "arriba": px desde arriba}. Sin "portada", fondo oscuro liso. "portada":"auto" elige de la colección tools/portadas/ (rota por fecha) o "portada":"<id>".
 Tipos del journal -> Instagram: Tipo 1 = Rotura ZA, Tipo 2 = ORB, Tipo 3 = Momentum.
+ESTILO V5 (aprobado por Ivan el 27 oct 2026, guía editorial sección 12): por defecto ("portada" ausente, "auto" o "david")
+  la portada es el «Session recap» sobre el David de Miguel Ángel (tools/estilo_v5.py, fondo tools/fondos/david.jpg) y el cierre
+  es el David más difuminado con «Somos lo que hacemos repetidamente.» · Will Durant · «Paso corto, vista larga.».
+  R en verde #3FE584 / rojo #FF5040. Los cuadros de tools/portadas/ solo se usan si se pide uno por su id.
 """
 import asyncio, base64, json, sys, os, datetime
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import estilo_v5 as E
 from playwright.async_api import async_playwright
 
 TIPOS = {"1":"Rotura ZA","tipo 1":"Rotura ZA","2":"ORB","tipo 2":"ORB","3":"Momentum","tipo 3":"Momentum","london 1":"EMA Trend","london 2":"FVG Reversal"}
@@ -49,7 +55,7 @@ p{font-size:46px;line-height:1.32;color:#d9d5ce}
 .row span{font-size:46px;font-weight:500}
 .chart{width:100%;height:900px;border-radius:18px;overflow:hidden;margin-top:36px;background:#c5c5c5}
 .chart img{width:100%;height:100%;object-fit:cover;object-position:50% 55%}
-.pos{color:#6fbf95}.neg{color:#d9776b}
+.pos{color:#3FE584}.neg{color:#FF5040}
 .bg{position:absolute;inset:-40px;background-size:cover;background-position:center;z-index:0}
 .veil{position:absolute;inset:0;z-index:1}
 .cov{position:absolute;left:96px;right:84px;bottom:150px;z-index:2;display:flex;flex-direction:column;gap:26px}
@@ -61,6 +67,8 @@ p{font-size:46px;line-height:1.32;color:#d9d5ce}
 .big{font-size:230px;font-weight:800;letter-spacing:-.04em;line-height:1}
 """
 def page(body, n, total, label="Diario"):
+    if callable(body):  # diapositiva completa del estilo v5 (portada y cierre)
+        return body(n, total)
     if isinstance(body, tuple):  # portada: (html de fondo, html encima)
         fondo, encima = body
         return f"<html><head><meta charset='utf-8'><style>{CSS}</style></head><body>{fondo}<div class='band' style='z-index:3'></div>{encima}<div class='foot' style='z-index:3;color:#cfc8bd'><span>@amoryprofit</span><span>{n}/{total}</span></div></body></html>"
@@ -103,9 +111,16 @@ def portada_fondo(cfg, basedir, extra_blur=0, extra_oscuro=0):
     return (f"<div class='bg' style=\"background-image:url(data:image/jpeg;base64,{b64})\"></div>"
             f"<div class='veil' style='background:linear-gradient(180deg,rgba(10,11,13,{k*.15:.2f}) 0%,rgba(10,11,13,{k*.25:.2f}) 45%,rgba(10,11,13,{min(k+.25,.9):.2f}) 100%)'></div>")
 
+def v5(dia):
+    """True si el día usa el estilo v5 (David): sin portada, "auto" o "david"."""
+    return dia.get("portada") in (None, "", "auto", "david")
+
 def resolver_portada(dia):
     """dia["portada"] == "auto" (o un id de la colección) -> config de tools/portadas/portadas.json. Rota por fecha."""
     cfg = dia.get("portada")
+    if v5(dia):
+        return {"imagen": os.path.join(os.path.dirname(os.path.abspath(__file__)), "fondos", "david.jpg"),
+                "completo": True, "arriba": 0, "desenfoque": 11, "oscuro": .55}
     if not isinstance(cfg, str): return cfg
     base = os.path.join(os.path.dirname(os.path.abspath(__file__)), "portadas")
     cat = json.load(open(os.path.join(base, "portadas.json")))["portadas"]
@@ -118,6 +133,14 @@ def resolver_portada(dia):
     out = dict(elegido); out["imagen"] = os.path.join(base, elegido["imagen"]); return out
 
 def portada(dia, cuentas, basedir):
+    if v5(dia):
+        cs = []
+        for c in cuentas:
+            ses = []
+            for o in sorted(c["ops"], key=lambda o: o["hora_entrada"]):
+                if sesion(o["hora_entrada"]) not in ses: ses.append(sesion(o["hora_entrada"]))
+            cs.append({"nombre": c.get("nombre") or "Resultado", "r": round(sum(o["r_real"] for o in c["ops"]), 2), "n": len(c["ops"]), "ses": ses})
+        return lambda n, t: E.recap_portada(dia["fecha"], cs, n, t)
     f = datetime.date.fromisoformat(dia["fecha"])
     fecha = f"{DIAS[f.weekday()]} {f.day} de {MESES[f.month-1]}"
     filas = ""
@@ -230,7 +253,10 @@ def build(dia, imgdir):
       <p style='font-size:44px;color:#9be0bd;font-weight:700;margin-top:26px;text-shadow:0 2px 14px rgba(0,0,0,.55)'>Paso corto, vista larga.</p>"""
     # El cierre lleva el fondo de la portada, más difuminado (extra_blur).
     fondo_cierre = portada_fondo(resolver_portada(dia), imgdir, extra_blur=5, extra_oscuro=.2)
-    def con_fondo(html): return (fondo_cierre, f"<div class='wrap' style='z-index:3'>{html}</div>")
+    def con_fondo(html):
+        if v5(dia) and html == f"<div class='mid'>{cierre}</div>":
+            return lambda n, t: E.recap_cierre(n, t)   # cierre v5: David más difuminado
+        return (fondo_cierre, f"<div class='wrap' style='z-index:3'>{html}</div>")
     if hay_refl:
         txt = esc(refl) if refl else ph("[Lección del día]")
         fs = 44 if len(refl) < 220 else 36
