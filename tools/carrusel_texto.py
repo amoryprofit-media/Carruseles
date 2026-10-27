@@ -8,12 +8,12 @@ post.json = {"id":"m-2026-10-14","slides":[{"arriba":"texto pequeño opcional","
 """
 import asyncio, json, sys, os, html
 from playwright.async_api import async_playwright
-BG, FG, SUB, NAR = "#f5f0e8", "#1d1f1c", "#3b3d39", "#e4580b"
+BG, FG, SUB, NAR = "#ECE0CC", "#2A211B", "#3b3229", "#e4580b"   # papel cálido v5 (27 oct 2026)
 CSS=f"""*{{margin:0;padding:0;box-sizing:border-box}}
 body{{width:1080px;height:1350px;background:{BG};color:{FG};font-family:'Inter Display','Inter',sans-serif;position:relative;overflow:hidden}}
 .band{{position:absolute;left:0;top:0;bottom:0;width:18px;background:{NAR}}}
 .wrap{{position:absolute;left:96px;right:96px;top:84px;bottom:130px;display:flex;flex-direction:column;justify-content:center;gap:36px}}
-.foot{{position:absolute;left:96px;right:84px;bottom:56px;display:flex;justify-content:space-between;font-size:26px;color:#8a857c;font-weight:500}}
+.foot{{position:absolute;left:96px;right:84px;bottom:56px;display:flex;justify-content:space-between;font-size:26px;color:#7A6A58;font-weight:500}}
 .g{{font-size:76px;line-height:1.06;font-weight:800;letter-spacing:-.02em}}
 .p{{font-size:62px;line-height:1.28;font-weight:650;color:{FG}}}
 .n{{color:{NAR}}} .lema{{font-size:44px;color:{NAR};font-weight:600;margin-top:16px}}"""
