@@ -180,6 +180,7 @@ def build_cuenta(nombre, ops, imgdir, fecha_corta, n_cuentas, merge_ids=()):
         c = "pos" if o["r_real"] >= 0 else "neg"
         dur = round(o.get("duracion_min") or 0)
         dur_txt = (f"{dur} minuto" if dur == 1 else f"{dur} minutos") if dur < 90 else f"{dur//60} h {dur%60:02d} min"
+        if (o.get("duracion_min") or 0) < 1: dur_txt = "menos de 1 minuto"
         kicker = f"<div class='kicker'>{(esc(nombre)+' · ') if nombre and n_cuentas > 1 else ''}{('Trade '+str(i)+' de '+str(n)+' · ') if n > 1 else ''}{sesion(o['hora_entrada'])}</div>"
         t = tipo(o.get("tipo","")) or (ph("[Rotura ZA · ORB · Momentum]") if PREVIEW else "")
         idea = (o.get("reflexion") or "").strip() or (ph("[Por qué entré: una o dos frases]") if PREVIEW else "")
