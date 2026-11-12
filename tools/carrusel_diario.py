@@ -306,6 +306,7 @@ async def render(pages, out, prefix):
 
 if __name__ == "__main__":
     dia = json.load(open(sys.argv[1])); out = sys.argv[2]
+    if dia.get("fondo"): E.FONDO = dia["fondo"]   # fondo alternativo del recap v5 (tools/fondos/), p. ej. "samotracia.jpg"
     PREVIEW = "--preview" in sys.argv
     V2 = "--v1" not in sys.argv
     pages = build(dia, os.path.dirname(os.path.abspath(sys.argv[1])))

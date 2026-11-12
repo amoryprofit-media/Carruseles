@@ -35,10 +35,14 @@ def grano(im, k=0.045, seed=7):
 def b64(im, q=88):
     buf = io.BytesIO(); im.convert("RGB").save(buf, "JPEG", quality=q); return base64.b64encode(buf.getvalue()).decode()
 
+FONDO = "david.jpg"   # fondo del recap; dia.json "fondo" lo cambia (p. ej. "samotracia.jpg" para días especiales)
+
 def david(blur, oscuro=1.0, x=300):
-    """David entero: estatua a toda altura (1350) desplazada a la derecha; laterales rellenos con la propia foto muy difuminada."""
-    src = Image.open(os.path.join(IMG, "david.jpg")).convert("RGB")
+    """David entero: estatua a toda altura (1350) desplazada a la derecha; laterales rellenos con la propia foto muy difuminada.
+    Usa tools/fondos/<FONDO> (por defecto david.jpg)."""
+    src = Image.open(os.path.join(IMG, FONDO)).convert("RGB")
     h = 1350; w = int(src.width * h / src.height)
+    x = max(0, min(x, 1080 - w))
     base = src.resize((int(src.width * 1500 / src.height) * 2, 1500), Image.LANCZOS)
     base = base.crop(((base.width - 1080) // 2, 75, (base.width - 1080) // 2 + 1080, 1425)).filter(ImageFilter.GaussianBlur(45))
     base.paste(src.resize((w, h), Image.LANCZOS), (x, 0))
