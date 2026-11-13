@@ -263,7 +263,7 @@ def build(dia, imgdir):
         fs = 44 if len(refl) < 220 else 36
         if separar and V2:
             rt = sum(o["r_real"] for c in cuentas for o in c["ops"]); cl = "pos" if rt >= 0 else "neg"
-            fs2 = 56 if len(refl) < 200 else 48
+            fs2 = 56 if len(refl) < 200 else 48 if len(refl) < 360 else 40  # valoraciones largas: letra menor para no pisar el pie
             if len(cuentas) > 1:  # cada cuenta por separado (regla de Ivan, 13 oct 2026): nunca sumar R de cuentas distintas
                 filas = ""
                 for c in cuentas:
