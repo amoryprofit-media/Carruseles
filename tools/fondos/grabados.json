@@ -1,5 +1,65 @@
-{"nota": "Grabados para mentalidad (estilo v5). Se elige uno ad hoc según el tema; si ninguno encaja, se busca otro en Wikimedia Commons (dominio público o CC0) en conversación con Ivan. Estilo: que se vea dibujo, línea y trama visibles, tonos medios; ni muy oscuros/nocturnos ni de línea esquemática. Sin desnudos frontales ni cadáveres.",
+{
+ "nota": "Grabados para mentalidad (estilo v5). Se elige uno ad hoc según el tema; si ninguno encaja, se busca otro en Wikimedia Commons (dominio público o CC0) en conversación con Ivan. Estilo: que se vea dibujo, línea y trama visibles, tonos medios; ni muy oscuros/nocturnos ni de línea esquemática. Sin desnudos frontales ni cadáveres.",
  "grabados": [
-  {"id": "quijote", "imagen": "quijote.jpg", "foco": [0.5, 0.42], "temas": ["pelear contra el mercado", "enemigos imaginarios", "obsesión", "idealismo"], "obra": "Aventura de los molinos (Don Quijote)", "autor": "Gustave Doré", "fuente": "https://commons.wikimedia.org/wiki/File:Adventure_with_the_Windmills.jpg", "licencia": "Dominio público"},
-  {"id": "hidra", "imagen": "hidra.jpg", "foco": [0.5, 0.0], "temas": ["revancha", "recuperar pérdidas", "sobreoperar", "problemas que se multiplican"], "obra": "Hércules mata a la Hidra de Lerna", "autor": "Battista Franco Veneziano", "fuente": "https://commons.wikimedia.org/wiki/File:Hercules_Killing_the_Hydra_of_Lerna.jpg", "licencia": "Dominio público", "aviso": "foco [0.5, 0.0] obligatorio: recorta por arriba para evitar el desnudo"}
- ]}
+  {
+   "id": "quijote",
+   "imagen": "quijote.jpg",
+   "foco": [
+    0.5,
+    0.42
+   ],
+   "temas": [
+    "pelear contra el mercado",
+    "enemigos imaginarios",
+    "obsesión",
+    "idealismo"
+   ],
+   "obra": "Aventura de los molinos (Don Quijote)",
+   "autor": "Gustave Doré",
+   "fuente": "https://commons.wikimedia.org/wiki/File:Adventure_with_the_Windmills.jpg",
+   "licencia": "Dominio público"
+  },
+  {
+   "id": "hidra",
+   "imagen": "hidra.jpg",
+   "foco": [
+    0.5,
+    0.0
+   ],
+   "temas": [
+    "revancha",
+    "recuperar pérdidas",
+    "sobreoperar",
+    "problemas que se multiplican"
+   ],
+   "obra": "Hércules mata a la Hidra de Lerna",
+   "autor": "Battista Franco Veneziano",
+   "fuente": "https://commons.wikimedia.org/wiki/File:Hercules_Killing_the_Hydra_of_Lerna.jpg",
+   "licencia": "Dominio público",
+   "aviso": "foco [0.5, 0.0] obligatorio: recorta por arriba para evitar el desnudo"
+  },
+  {
+   "id": "eleccion_hercules",
+   "imagen": "eleccion_hercules.jpg",
+   "foco": [
+    0.5,
+    0.5
+   ],
+   "temas": [
+    "elegir el camino difícil",
+    "tentación",
+    "disciplina",
+    "decir que no",
+    "promesas a uno mismo"
+   ],
+   "obra": "La elección de Hércules (Hércules entre la Virtud y el Vicio)",
+   "autor": "Anónimo británico (dibujo a pluma y aguada)",
+   "fuente": "https://www.artic.edu/artworks/ (Art Institute of Chicago, image_id 35b636dd-62fe-53a7-dc75-6621a7fe6f73)",
+   "licencia": "Dominio público (CC0, Art Institute of Chicago)",
+   "aviso": "Recortado: fuera la figura reclinada del Vicio (semidesnuda) de la izquierda",
+   "usado": [
+    "2026-11-21"
+   ]
+  }
+ ]
+}
