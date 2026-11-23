@@ -60,6 +60,49 @@
    "usado": [
     "2026-11-21"
    ]
+  },
+  {
+   "id": "hidra_beham",
+   "imagen": "hidra_beham.jpg",
+   "foco": [
+    1.0,
+    0.5
+   ],
+   "temas": [
+    "viejos hábitos que vuelven",
+    "errores que reaparecen",
+    "bajar la guardia"
+   ],
+   "obra": "Hércules y la Hidra, de la serie Los trabajos de Hércules",
+   "autor": "Sebald Beham (1545)",
+   "fuente": "https://www.artic.edu/artworks/106689 (Art Institute of Chicago, image_id 91e9eee2-b718-fae9-54d0-53afd9c8a70f)",
+   "licencia": "Dominio público (CC0, Art Institute of Chicago)",
+   "nota": "Usar con foco x=1.0: así no entra la figura de Hércules de frente.",
+   "usado": [
+    "2026-11-24"
+   ]
+  },
+  {
+   "id": "icaro_collaert",
+   "imagen": "icaro_collaert.jpg",
+   "foco": [
+    0.5,
+    0.4
+   ],
+   "temas": [
+    "avaricia",
+    "querer estirar",
+    "ambición desmedida",
+    "no cerrar a tiempo"
+   ],
+   "obra": "La caída de Ícaro, de Paisajes con escenas del Antiguo y Nuevo Testamento",
+   "autor": "Adriaen Collaert (1584)",
+   "fuente": "https://www.artic.edu/artworks/229147 (Art Institute of Chicago, image_id b7924d5c-2152-62e6-7886-c0dbd056916d)",
+   "licencia": "Dominio público (CC0, Art Institute of Chicago)",
+   "nota": "Recortado sin la orla decorativa.",
+   "usado": [
+    "2026-11-28"
+   ]
   }
  ]
 }
