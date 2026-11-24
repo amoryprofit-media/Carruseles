@@ -131,8 +131,10 @@ def trade(kicker, chart_path, filas, idea, esc, n, t):
     if chart_path and os.path.exists(chart_path):
         graf = (f"<div style='margin-top:30px;border-radius:22px;overflow:hidden;background:{HX(PANEL)};padding:18px 10px 8px'>"
                 f"<img src='data:image/png;base64,{b64png(grafico_trade(chart_path))}' style='width:100%;display:block'></div>")
-    rows = "".join(f"<div class='row'><b>{esc(nm)}</b><span class='{'pos' if v >= 0 else 'neg'}' style='font-size:64px'>{r(v)}</span></div>" for nm, v in filas)
-    fs = 38 if len(idea) <= 260 else 34 if len(idea) <= 380 else 30
+    rs = 64 if len(filas) < 2 else 54
+    rows = "".join(f"<div class='row'><b>{esc(nm)}</b><span class='{'pos' if v >= 0 else 'neg'}' style='font-size:{rs}px'>{r(v)}</span></div>" for nm, v in filas)
+    L = len(idea) + 200 * (len(filas) - 1)   # cada cuenta de más ocupa una fila: el texto se reduce antes para no pisar el pie
+    fs = 38 if L <= 260 else 34 if L <= 380 else 30 if L <= 470 else 27
     p = f"<p style='margin-top:26px;font-size:{fs}px;line-height:1.3;font-weight:500'>{esc(idea)}</p>" if idea else ""
     body = (f"<div style='position:absolute;left:72px;right:72px;top:72px'><div class='k'>{esc(kicker)}</div>{graf}"
             f"<div style='margin-top:34px'>{rows}</div>{p}</div>")
