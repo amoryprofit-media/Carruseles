@@ -10,6 +10,8 @@ Portada: dia.json["portada"] = {"imagen": ruta (relativa al json o absoluta), "r
   "desenfoque": px (def. 6), "oscuro": 0-1 (def. .55), "gris": false,
   "completo": true para poner el cuadro entero (menos zoom) con "arriba": px desde arriba}. Sin "portada", fondo oscuro liso. "portada":"auto" elige de la colección tools/portadas/ (rota por fecha) o "portada":"<id>".
 Tipos del journal -> Instagram: Tipo 1 = Rotura ZA, Tipo 2 = ORB, Tipo 3 = Momentum.
+ESTILO V6 (24 nov 2026, POR DEFECTO): fondo grafito, portada con fecha + gráfico real del primer trade de Nueva York,
+  trades sin eje de precios, resumen y cierre con el logo (tools/estilo_v6.py). dia.json "estilo":"v5" recupera el David.
 ESTILO V5 (aprobado por Ivan el 27 oct 2026, guía editorial sección 12): por defecto ("portada" ausente, "auto" o "david")
   la portada es el «Session recap» sobre el David de Miguel Ángel (tools/estilo_v5.py, fondo tools/fondos/david.jpg) y el cierre
   es el David más difuminado con «Somos lo que hacemos repetidamente.» · Will Durant · «Paso corto, vista larga.».
@@ -18,6 +20,7 @@ ESTILO V5 (aprobado por Ivan el 27 oct 2026, guía editorial sección 12): por d
 import asyncio, base64, json, sys, os, datetime
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import estilo_v5 as E
+import estilo_v6 as E6
 from playwright.async_api import async_playwright
 
 TIPOS = {"1":"Rotura ZA","tipo 1":"Rotura ZA","2":"ORB","tipo 2":"ORB","3":"Momentum","tipo 3":"Momentum","london 1":"EMA Trend","london 2":"FVG Reversal"}
@@ -224,6 +227,8 @@ def build_cuenta(nombre, ops, imgdir, fecha_corta, n_cuentas, merge_ids=()):
     return bodies
 
 def build(dia, imgdir):
+    if dia.get("estilo") != "v5":   # v6 (grafito) por defecto desde el 24 nov 2026
+        return build_v6(dia, imgdir)
     f = datetime.date.fromisoformat(dia["fecha"])
     fecha_corta = f"{DIAS[f.weekday()]} {f.day} {MESES[f.month-1][:3]}"
     cuentas = dia.get("cuentas") or [{"nombre": "", "ops": dia["ops"]}]
@@ -293,6 +298,77 @@ def build(dia, imgdir):
         bodies = bodies[:10]
     total = len(bodies)
     return [page(b, k+1, total) for k, b in enumerate(bodies)]
+
+def es_v6(dia): return dia.get("estilo") != "v5"
+
+def build_v6(dia, imgdir):
+    """Estilo v6 (tools/estilo_v6.py). Portada con el primer trade de Nueva York; un trade = una diapositiva
+    (el mismo trade en dos cuentas va junto, con la R de cada una: se detecta solo o con dia["replicas"]);
+    dia["pares"] = [[id_a, id_b, "texto"]] junta dos trades seguidos; resumen del día; cierre con el logo. Máx. 10."""
+    cuentas = [c for c in (dia.get("cuentas") or [{"nombre": "", "ops": dia["ops"]}]) if c.get("ops")]
+    ops = []
+    for c in cuentas:
+        for o in c["ops"]: ops.append((c.get("nombre") or "Resultado", o))
+    ops.sort(key=lambda x: x[1]["hora_entrada"])
+    img = lambda o: (lambda p: p if os.path.exists(p) else None)(os.path.join(imgdir, o["id"] + ".png"))
+    def seg(h): hh, mm, *ss = (h.split(":") + ["0"])[:3]; return int(hh) * 3600 + int(mm) * 60 + int(float(ss[0]))
+    # réplicas: el mismo trade en otra cuenta (dado o detectado: sin gráfico propio, misma dirección, ±5 s)
+    rep = {b: a for a, b in dia.get("replicas", [])}
+    for nm, o in ops:
+        if img(o) or o["id"] in rep: continue
+        for nm2, o2 in ops:
+            if o2 is not o and nm2 != nm and img(o2) and o2["direccion"][:1] == o["direccion"][:1] and abs(seg(o2["hora_entrada"]) - seg(o["hora_entrada"])) <= 5:
+                rep[o["id"]] = o2["id"]; break
+    pares = {p[0]: p for p in dia.get("pares", [])}; en_par = {p[1] for p in dia.get("pares", [])}
+    byid = {o["id"]: (nm, o) for nm, o in ops}
+    items = []
+    for nm, o in ops:
+        if o["id"] in rep or o["id"] in en_par: continue
+        miembros = [(nm, o)] + [byid[b] for b, a in rep.items() if a == o["id"] and b in byid]
+        if o["id"] in pares and pares[o["id"]][1] in byid:
+            items.append(("par", [miembros, [byid[pares[o["id"]][1]]]], pares[o["id"]][2]))
+        else:
+            items.append(("trade", miembros, None))
+    def dur(o):
+        d = o.get("duracion_min") or 0
+        if d < 1: return "menos de 1 min"
+        d = round(d); return f"{d} min" if d < 90 else f"{d//60} h {d%60:02d} min"
+    def kicker(o):
+        partes = [o["hora_entrada"][:5], sesion(o["hora_entrada"]), tipo(o.get("tipo", "")) or "",
+                  "Corto" if o["direccion"].upper().startswith("C") else "Largo", dur(o)]
+        return " · ".join(p for p in partes if p)
+    resumen_c = []
+    for c in cuentas:
+        cops = sorted(c["ops"], key=lambda o: o["hora_entrada"]); ses = []
+        for o in cops:
+            if sesion(o["hora_entrada"]) not in ses: ses.append(sesion(o["hora_entrada"]))
+        n = len(cops)
+        resumen_c.append({"nombre": c.get("nombre") or "Resultado", "r": round(sum(o["r_real"] for o in cops), 2),
+                          "sub": f"{n} {'trade' if n == 1 else 'trades'} · {' y '.join(ses)}"})
+    con_img = [it for it in items if img(it[1][0][1] if it[0] == "trade" else it[1][0][0][1])]
+    prim = lambda it: it[1][0][1] if it[0] == "trade" else it[1][0][0][1]
+    ny = [it for it in con_img if sesion(prim(it)["hora_entrada"]) == "Nueva York"]
+    graf_portada = img(prim((ny or con_img)[0])) if con_img else None
+    refl = (dia.get("reflexion") or "").strip()
+    # límite de Instagram: 10 imágenes. Primero se quita el cierre; si no basta, se juntan trades de dos en dos desde el final.
+    con_cierre = 1 + len(items) + 2 <= 10
+    while 1 + len(items) + 1 + (1 if con_cierre else 0) > 10:
+        i = max(k for k in range(len(items) - 1) if items[k][0] == "trade" and items[k + 1][0] == "trade") if any(
+            items[k][0] == "trade" and items[k + 1][0] == "trade" for k in range(len(items) - 1)) else None
+        if i is None: items = items[:8]; break
+        items[i:i + 2] = [("par", [items[i][1], items[i + 1][1]], "")]
+    slides = [lambda n, t: E6.html_img(E6.portada_png(dia["fecha"], resumen_c, graf_portada, n, t))]
+    for it in items:
+        if it[0] == "trade":
+            m = it[1]; o = m[0][1]
+            slides.append(lambda n, t, m=m, o=o: E6.trade(kicker(o), img(o), [(nm, x["r_real"]) for nm, x in m], (o.get("reflexion") or "").strip(), esc, n, t))
+        else:
+            grupos = it[1]
+            slides.append(lambda n, t, g=grupos: E6.pareja([(kicker(gm[0][1]), img(gm[0][1]), [(nm, x["r_real"]) for nm, x in gm]) for gm in g], esc, n, t))
+    slides.append(lambda n, t: E6.resumen(resumen_c, refl, esc, n, t))
+    if con_cierre: slides.append(lambda n, t: E6.cierre(n, t))
+    total = len(slides)
+    return [s(k + 1, total) for k, s in enumerate(slides)]
 
 async def render(pages, out, prefix):
     os.makedirs(out, exist_ok=True); paths=[]

@@ -9,6 +9,9 @@ import carrusel_diario as C
 
 dia_path, out = sys.argv[1], sys.argv[2]
 dia = json.load(open(dia_path)); imgdir = os.path.dirname(os.path.abspath(dia_path))
+if C.es_v6(dia):   # v6 gestiona réplicas y pares por sí mismo
+    pages = C.build(dia, imgdir); print(len(pages), "diapositivas")
+    asyncio.run(C.render(pages, out, dia["fecha"])); sys.exit(0)
 REPL = dia.pop("replicas", [])   # [[id_cuenta1, id_cuenta2], ...]
 PARES = dia.pop("pares", [])     # [[id_a, id_b, "texto común"], ...]
 ops = {o["id"]: (c["nombre"], o) for c in dia["cuentas"] for o in c["ops"]}
